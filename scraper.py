@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 import re
 
 
@@ -16,18 +17,22 @@ class SearchScraper:
     def fetch_element(self, query):
         # Following section heavily based on tutorial from tutorialspoint:
         # https://www.tutorialspoint.com/python_web_scraping/python_web_scraping_dynamic_websites.htm
-        self._driver.get(self._search_url)
-        self._driver.find_element_by_id("search").send_keys(query)
-        self._driver.find_element_by_id("search").send_keys(Keys.ENTER)
-        self._driver.implicitly_wait(45)
-        link = self._driver.find_element_by_css_selector(".product > .product > .product-item-link")
-        print("Following link:", link.text)
-        link.click()
-        login_link = self._driver.find_element_by_css_selector("#simple-" + query + " .add-to-cart-btn span")
-        if not self._logged_in:
-            self.login(login_link)
+        try:
+            self._driver.get(self._search_url)
+            self._driver.find_element_by_id("search").send_keys(query)
+            self._driver.find_element_by_id("search").send_keys(Keys.ENTER)
+            self._driver.implicitly_wait(45)
+            link = self._driver.find_element_by_css_selector(".product > .product > .product-item-link")
+            print("Following link:", link.text)
+            link.click()
+            login_link = self._driver.find_element_by_css_selector("#simple-" + query + " .add-to-cart-btn span")
+            if not self._logged_in:
+                self.login(login_link)
 
-        return self._driver.find_element_by_xpath("//div[@id='simple-" + query + "']/div[3]/div")
+            return self._driver.find_element_by_xpath("//div[@id='simple-" + query + "']/div[3]/div")
+
+        except NoSuchElementException:
+            return ""
 
     def fetch_data(self, query, regex):
         # Get the element being searched for and convert it to text.
